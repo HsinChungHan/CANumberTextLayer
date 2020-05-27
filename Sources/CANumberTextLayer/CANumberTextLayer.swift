@@ -35,14 +35,15 @@ public class CANumberTextlayer: CATextLayer {
   
   var animationStartDate: Date?
   var displayLink: CADisplayLink?
+}
+
+//MARK: - Public functions
+extension CANumberTextlayer {
   
-  //MARK: - View life cycles
-  override public func draw(in ctx: CGContext) {
-    super.draw(in: ctx)
+  public func setLayerProperties() {
     guard let dataSource = dataSource else {
-      fatalError("You have to set dataSource for AnimationNumberTextLayer")
+      fatalError("You have to set dataSource for AnimationNumberLabel")
     }
-    
     font = dataSource.animationNumberTextLayerLabelFont(self)
     fontSize = dataSource.animationNumberTextLayerLabelFontSize(self)
     backgroundColor = dataSource.animationNumberTextLayerBackgroundColor(self).cgColor
@@ -50,10 +51,6 @@ public class CANumberTextlayer: CATextLayer {
     alignmentMode = dataSource.animationNumberTextLayerTextAlignment(self)
     contentsScale = UIScreen.main.scale
   }
-}
-
-//MARK: - Public functions
-extension CANumberTextlayer {
   
   public func launchDisplayLink() {
     animationStartDate = Date()
@@ -64,31 +61,38 @@ extension CANumberTextlayer {
 
 //MARK: - Internal functions
 extension CANumberTextlayer {
+  
   func invalidateDisplayLink() {
     displayLink?.invalidate()
     displayLink = nil
   }
   
-  @objc func handleDisplayLink() {
-    guard let dataSource = dataSource else {
-      fatalError("You have to set dataSource for AnimationNumberLabel")
-    }
-    let startValue = dataSource.animationNumberTextLayerStartValue(self)
-    let endValue = dataSource.animationNumberTextLayerEndValue(self)
-    let duration = dataSource.animationNumberTextLayerDuration(self)
-    guard let animationStartDate = animationStartDate else {
-      return
-    }
-    let now = Date()
-    let elaspedTime = now.timeIntervalSince(animationStartDate)
-    if elaspedTime > duration {
-      string = "\(endValue)"
-      invalidateDisplayLink()
-    } else {
-      let percentage = elaspedTime / duration
-      let value = Int(Double(startValue) + percentage * Double(endValue - startValue))
-      string = "\(value)"
-    }
-  }
+   @objc func handleDisplayLink() {
+     guard let dataSource = dataSource else {
+       fatalError("You have to set dataSource for AnimationNumberLabel")
+     }
+     let startValue = dataSource.animationNumberTextLayerStartValue(self)
+     let endValue = dataSource.animationNumberTextLayerEndValue(self)
+     let duration = dataSource.animationNumberTextLayerDuration(self)
+     guard let animationStartDate = animationStartDate else {
+       return
+     }
+     let now = Date()
+     let elaspedTime = now.timeIntervalSince(animationStartDate)
+     
+     let formatter = NumberFormatter()
+     formatter.numberStyle = .decimal
+     
+     if elaspedTime > duration {
+       let formattedEndValue = formatter.string(from: .init(value: endValue)) ?? "000000"
+       string = "\(formattedEndValue)"
+       invalidateDisplayLink()
+     } else {
+       let percentage = elaspedTime / duration
+       let value = Int(Double(startValue) + percentage * Double(endValue - startValue))
+       let formattedValue = formatter.string(from: .init(value: value)) ?? "000000"
+       string = "\(formattedValue)"
+     }
+   }
 }
 
